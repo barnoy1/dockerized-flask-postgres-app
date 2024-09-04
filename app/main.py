@@ -2,6 +2,11 @@ import os
 from flask import Flask, request, jsonify
 from app.database.models import db, User
 
+from flask_assets import Environment
+from flask_cors import CORS
+from flask_login import LoginManager
+
+
 if os.getenv('FLASK_ENV') == 'development':
     import debugpy
     debugpy.listen(("0.0.0.0", 5678))
@@ -10,12 +15,34 @@ if os.getenv('FLASK_ENV') == 'development':
 app = Flask(__name__)
 app.config.from_object('app.config.Config')
 
-db.init_app(app)
+CORS(app)
+
+assets = Environment()
+assets.init_app(app)
 
 with app.app_context():
-        # Create tables if they don't exist
-        db.create_all()
+    
+    from .home import home
+    
+    # instantiate database
+    from .database.models import db, User
+    db.init_app(app)
+    db.create_all()
 
+    # Register Blueprints
+    app.register_blueprint(home.home_bp)
+    
+    
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth_bp.login'
+    login_manager.init_app(app)
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+    # since the user_id is just the primary key of our user table, use it in the query for the user
+        return User.query.get(int(user_id))
+        
+        
 @app.route('/test', methods=['GET'])
 def get_result():
     return jsonify({'result': 'ok'})

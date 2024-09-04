@@ -4,3 +4,6 @@ SQLAlchemy==1.4.48
 psycopg2-binary==2.9.5
 debugpy
 flask-login
+flask-assets
+flask-cors
+flask_login
