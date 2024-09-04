@@ -1,0 +1,29 @@
+# Dockerfile.debug
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the requirements file into the container
+COPY requirements.txt requirements.txt
+
+# Install any needed packages specified in requirements.txt
+RUN pip install -r requirements.txt
+
+# Install debugpy for remote debugging
+RUN pip install debugpy
+
+# Copy the rest of the application code into the container
+COPY . .
+
+# Set environment variables
+ENV FLASK_APP=app/main.py
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_ENV=development  
+
+# Expose the ports for Flask and debugging
+EXPOSE 5000
+EXPOSE 5678
+
+# Run the application with debugging enabled
+CMD ["flask", "run"]
