@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify
-from app.models import db, User
+from app.database.models import db, User
 
 if os.getenv('FLASK_ENV') == 'development':
     import debugpy
@@ -26,7 +26,7 @@ def get_result():
 def create_user():
     data = request.get_json()
     if not data or 'name' not in data:
-        abort(400, description="Invalid input")
+        os.abort(400, description="Invalid input")
     
     name = data['name']
     new_user = User(name=name)
@@ -45,7 +45,7 @@ def get_users():
 def get_user(id):
     user = User.query.get(id)
     if user is None:
-        abort(404, description="User not found")
+        os.abort(404, description="User not found")
     return jsonify(user.to_dict())
 
 # Update a user by ID
@@ -54,7 +54,7 @@ def update_user(id):
     data = request.get_json()
     user = User.query.get(id)
     if user is None:
-        abort(404, description="User not found")
+        os.abort(404, description="User not found")
     if 'name' in data:
         user.name = data['name']
     db.session.commit()
@@ -65,7 +65,7 @@ def update_user(id):
 def delete_user(id):
     user = User.query.get(id)
     if user is None:
-        abort(404, description="User not found")
+        os.abort(404, description="User not found")
     db.session.delete(user)
     db.session.commit()
     return '', 204
