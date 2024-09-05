@@ -12,7 +12,7 @@ if os.getenv('FLASK_ENV') == 'development':
     debugpy.listen(("0.0.0.0", 5678))
     print("Waiting for debugger attach...")
     
-app = Flask(__name__)
+app = Flask(__name__,  static_folder="../static")
 app.config.from_object('app.config.Config')
 
 CORS(app)
