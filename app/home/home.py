@@ -25,7 +25,6 @@ def home():
     curr_user_name = 'Guest' if current_user.is_anonymous else current_user.name
     return render_template(
         "index.jinja2",
-        # "index.jinja2",
         title="Application Name",
         user_name=curr_user_name
     )
