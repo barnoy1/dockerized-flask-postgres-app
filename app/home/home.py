@@ -1,6 +1,6 @@
 
 """General page routes."""
-from flask import Blueprint, redirect, url_for
+from flask import Blueprint, redirect, url_for, send_from_directory
 from flask import current_app as app
 from flask import render_template
 from flask_login import login_required, current_user
@@ -13,6 +13,11 @@ home_bp = Blueprint(
     template_folder="templates",  # Points to "home/templates"
     static_folder="../static"     # Points to the root-level "static" folder
 )
+
+@home_bp.route('/js/<path:filename>')
+def custom_js(filename):
+    """Serve JavaScript files from the templates directory."""
+    return send_from_directory('templates', filename)
 
 @home_bp.route("/", methods=["GET", "POST"])
 def home():
