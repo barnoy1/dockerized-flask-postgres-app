@@ -22,7 +22,7 @@ assets.init_app(app)
 
 with app.app_context():
     
-    from .home import home
+    from .home import route as home_route
     
     # instantiate database
     from .database.models import db, User
@@ -30,7 +30,7 @@ with app.app_context():
     db.create_all()
 
     # Register Blueprints
-    app.register_blueprint(home.home_bp)
+    app.register_blueprint(home_route.home_bp)
     
     
     login_manager = LoginManager()
