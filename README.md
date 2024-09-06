@@ -1,4 +1,5 @@
 # dockerized-flask-postgres-app
-dockerized application with flask server and postgres containers . support offline javascript libraries such as chart.js and bootstrap.js
+simple dockerize flask app with dummy dashboard with postgres database
 
-The dashboard is taken from 
+
+The dashboard is taken from [Bootstrapious](https://bootstraptemple.com/) website
