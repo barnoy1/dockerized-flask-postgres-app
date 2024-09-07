@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Rebuild and Start Docker",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.debug.yaml up --build -d",
+            "problemMatcher": []
+        }
+    ]
+}

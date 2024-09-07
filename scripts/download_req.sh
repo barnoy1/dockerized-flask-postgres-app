@@ -5,5 +5,5 @@ cd "$(dirname "$0")"
 
 # download whls packages
 mkdir -p ../wheelhouse
-pip download --dest=../wheelhouse -r ../requirements.txt
+pip download --dest=../wheelhouse -r ../requirements_py38.txt
 

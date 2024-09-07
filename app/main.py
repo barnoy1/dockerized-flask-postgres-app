@@ -45,6 +45,9 @@ with app.app_context():
         
 @app.route('/test', methods=['GET'])
 def get_result():
+    import logging
+    logger = logging.getLogger('my_logger')
+    logger.info("This is an info message logged to both console and file.")
     return jsonify({'result': 'ok'})
 
 

@@ -21,6 +21,8 @@ services:
       - "5678:5678"
     depends_on:
       - db
+    volumes:
+      - ./out:/app/out
 
 volumes:
   postgres_data:
