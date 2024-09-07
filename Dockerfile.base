@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # create out dir
-RUN mkdir -p /app/out
+RUN mkdir -p /app/out/logs
 
 # Copy the requirements file into the container
 COPY requirements_py38.txt requirements_py38.txt

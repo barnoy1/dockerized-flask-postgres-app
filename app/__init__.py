@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Generate the filename with current date and time
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-log_filename = f'/app/out/app_{current_time}.log'
+log_filename = f'/app/out/logs/app_{current_time}.log'
 
 
 # Create a logger object
@@ -19,7 +19,7 @@ file_handler.setLevel(logging.DEBUG)
 
 # Define a formatter for the file (plain text, no colors)
 file_formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "%(asctime)s - %(levelname)s => %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 file_handler.setFormatter(file_formatter)
@@ -67,11 +67,8 @@ class StdOutToLogger:
 # Redirect stdout to file logger (but not console logger)
 sys.stdout = StdOutToLogger(logger, logging.INFO)
 
-# Example usage
-print("This message goes to the log file but still prints to the console.")
-
 # Log an example message
-logger.info(f"Current working directory: {os.getcwd()}")
+logger.info(f"logger created in current working directory: {os.getcwd()}")
 
 
 # Restore original stdout (optional if you want to switch back)
