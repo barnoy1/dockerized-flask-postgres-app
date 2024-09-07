@@ -1,8 +1,8 @@
 
 
-from datetime import datetime
+import datetime
 from venv import logger
-from app.database.consts import Status, ProcessName
+from app.consts import Status, ProcessName
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, Time
 from flask_login import UserMixin
