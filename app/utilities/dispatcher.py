@@ -35,7 +35,13 @@ class StoppableThread(threading.Thread):
                 self._target()
         except Exception as e:
             logging.error(f"Thread encountered an error for task {self.task_id}: {e}")
-            self._callback(self.task_id, TaskStatus.ERROR, str(e))
+            self._callback(TaskStatus.ERROR, str(e))
+        finally:
+            # Call the callback based on whether the task was stopped or completed
+            if not self.stopped():
+                self._callback(TaskStatus.COMPLETE)
+            else:
+                self._callback(TaskStatus.CANCELED)
 
 # Dispatcher class that handles running multiple tasks in stoppable threads
 class Dispatcher:
@@ -87,7 +93,9 @@ class Dispatcher:
                 callback(task_id, TaskStatus.ERROR, f"Exit code: {exit_code}")
 
         # Create a stoppable thread with the task and start it
-        thread = StoppableThread(task_id=task_id, target=task, callback=self._on_task_end(callback, task_id))
+        # Pass the wrapped callback instead of calling the wrapper directly
+        wrapped_callback = self._on_task_end(callback, task_id)
+        thread = StoppableThread(task_id=task_id, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
         thread.start()
         return task_id

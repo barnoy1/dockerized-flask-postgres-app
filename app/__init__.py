@@ -4,9 +4,17 @@ import colorlog
 import sys
 from datetime import datetime
 
+def is_running_in_pytest():
+    """Detect if the code is running under pytest."""
+    return "pytest" in sys.modules
+
 # Generate the filename with current date and time
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-log_filename = f'/app/out/logs/app_{current_time}.log'
+if not is_running_in_pytest():
+    log_filename = f'/app/out/logs/app_{current_time}.log'
+else:
+    os.makedirs('out/logs', exist_ok=True)
+    log_filename = f'out/logs/app_{current_time}.log'
 
 
 # Create a logger object
