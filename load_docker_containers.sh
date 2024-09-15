@@ -1,35 +1,48 @@
 #!/bin/bash
 
-# Define environment variables
-POSTGRES_USER="postgres"
-POSTGRES_PASSWORD="password"
-POSTGRES_DB="mydatabase"
-DATABASE_URL="postgresql://postgres:password@db:5432/mydatabase"
+# Variables
+DB_CONTAINER_NAME="db"
+WEB_CONTAINER_NAME="web"
+DB_IMAGE="postgres:13-alpine"
+WEB_IMAGE="web_image:latest"
+DB_USER="postgres"
+DB_PASSWORD="password"
+DB_NAME="custom_db"
+DB_PORT="5432"
+WEB_PORT="5000"
+DEBUG_PORT="5678"
 
-# Create a Docker network
-docker network create mynetwork
+# Create the Docker network
+docker network create mynetwork || true
 
 # Run the PostgreSQL container
 docker run -d \
-  --name db \
+  --name $DB_CONTAINER_NAME \
   --network mynetwork \
-  -e POSTGRES_USER=$POSTGRES_USER \
-  -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-  -e POSTGRES_DB=$POSTGRES_DB \
+  -e POSTGRES_USER=$DB_USER \
+  -e POSTGRES_PASSWORD=$DB_PASSWORD \
+  -e POSTGRES_DB=$DB_NAME \
   -v postgres_data:/var/lib/postgresql/data \
-  postgres:13-alpine
+  -v $(pwd)/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh \
+  --health-cmd="pg_isready -U $DB_USER -d $DB_NAME" \
+  --health-interval=10s \
+  --health-retries=5 \
+  --health-start-period=30s \
+  $DB_IMAGE
 
-# Build the web service Docker image
-docker build -f Dockerfile.debug -t web-image .
+# Build the web application image
+docker build -t $WEB_IMAGE -f Dockerfile.debug .
 
-# Run the web service container
+# Run the web application container
 docker run -d \
-  --name web \
+  --name $WEB_CONTAINER_NAME \
   --network mynetwork \
-  -e DATABASE_URL=$DATABASE_URL \
-  -p 5000:5000 \
-  -p 5678:5678 \
-  web-image
+  -e DATABASE_URL="postgres://$DB_USER:$DB_PASSWORD@$DB_CONTAINER_NAME:$DB_PORT/$DB_NAME" \
+  -p $WEB_PORT:5000 \
+  -p $DEBUG_PORT:5678 \
+  $WEB_IMAGE
 
-# Create and mount the volume
-docker volume create postgres_data
+# Create Docker volume
+docker volume create postgres_data || true
+
+echo "Containers and network have been set up."

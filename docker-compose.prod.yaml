@@ -3,23 +3,41 @@ version: '3.8'
 services:
   db:
     image: postgres:13-alpine
+    container_name: db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydatabase
+      POSTGRES_DB: custom_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh  # Initialization script
+    networks:
+      - mynetwork
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d custom_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
 
   web:
     build:
       context: .
       dockerfile: Dockerfile.prod
+    container_name: web
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/mydatabase
+      DATABASE_URL: postgresql://postgres:password@db:5432/custom_db
     ports:
       - "5000:5000"
+      - "5678:5678"
+    networks:
+      - mynetwork
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+
+networks:
+  mynetwork:
+    driver: bridge
