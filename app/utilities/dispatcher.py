@@ -4,6 +4,7 @@ import logging
 import sys
 import time
 import uuid
+import yaml
 
 # Define constants for task status
 class TaskStatus:
@@ -43,14 +44,40 @@ class StoppableThread(threading.Thread):
             else:
                 self._callback(TaskStatus.CANCELED)
 
+# Define the Command class
+class Command:
+    def __init__(self, conf_file, process_key, script_path):
+        self.conf_file = conf_file
+        self.process_key = process_key
+        self.script_path = script_path
+        self.config = self.load_config()
+
+    def load_config(self):
+        """Loads YAML configuration file and extracts parameters for the command."""
+        with open(self.conf_file, 'r') as file:
+            config = yaml.safe_load(file)
+        return config.get(self.process_key, {})
+
+    def build_command(self):
+        """Constructs the full command by injecting parameters from the YAML file."""
+        command = [self.script_path]  # Start with the script path
+
+        # Iterate over configuration parameters and inject them into the command
+        for key, value in self.config.items():
+            command.append(f"--{key}")
+            command.append(str(value))
+
+        return command
+
 # Dispatcher class that handles running multiple tasks in stoppable threads
 class Dispatcher:
     def __init__(self):
         self.threads = {}  # Dictionary to track live tasks
 
-    def run_task(self, command, callback):
+    def run_task(self, command_obj, callback):
         """Starts a new task in a stoppable thread."""
         task_id = str(uuid.uuid4())  # Generate a unique ID for each task
+        command = command_obj.build_command()  # Get the constructed command from the Command object
 
         def task():
             process = subprocess.Popen(
@@ -64,7 +91,6 @@ class Dispatcher:
 
             try:
                 while True:
-                    # Check if the thread is stopped
                     if self.threads[task_id].stopped():
                         process.terminate()
                         callback(task_id, TaskStatus.CANCELED)
@@ -92,8 +118,7 @@ class Dispatcher:
             else:
                 callback(task_id, TaskStatus.ERROR, f"Exit code: {exit_code}")
 
-        # Create a stoppable thread with the task and start it
-        # Pass the wrapped callback instead of calling the wrapper directly
+        # Wrapped callback to remove task after completion
         wrapped_callback = self._on_task_end(callback, task_id)
         thread = StoppableThread(task_id=task_id, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
@@ -133,32 +158,34 @@ def task_callback(task_id, status, message=None):
     elif status == TaskStatus.ERROR:
         logging.error(f"Task {task_id} encountered an error: {message}")
 
-# Example usage with multiple mock commands
+# Example usage
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(message)s', stream=sys.stdout)
 
     # Create dispatcher
     dispatcher = Dispatcher()
 
-    # Mock commands to simulate output and delays
-    command1 = ["python3", "-c", "import time; [print(f'Output 1, line {i}') or time.sleep(1) for i in range(5)]"]
-    command2 = ["python3", "-c", "import time; [print(f'Output 2, line {i}') or time.sleep(1) for i in range(7)]"]
+    # Create Command object
+    command_a = Command(
+        conf_file="conf.yaml",
+        process_key="command_a",
+        script_path="/path/to/process_a.py"
+    )
 
-    # Start two tasks
-    task_id_1 = dispatcher.run_task(command1, task_callback)
-    task_id_2 = dispatcher.run_task(command2, task_callback)
+    # Start a task
+    task_id = dispatcher.run_task(command_a, task_callback)
 
     # List live tasks
     logging.info(f"Live tasks: {dispatcher.get_live_tasks()}")
 
-    # Stop the first task after 3 seconds (for demonstration purposes)
+    # Stop the task after 3 seconds (for demonstration purposes)
     time.sleep(3)
-    dispatcher.stop_task(task_id_1)
+    dispatcher.stop_task(task_id)
 
-    # List live tasks after stopping task 1
-    logging.info(f"Live tasks after stopping task 1: {dispatcher.get_live_tasks()}")
+    # List live tasks after stopping task
+    logging.info(f"Live tasks after stopping task: {dispatcher.get_live_tasks()}")
 
-    # Let the second task complete
+    # Wait to ensure any remaining tasks complete
     time.sleep(10)
 
     # List live tasks after all tasks complete
