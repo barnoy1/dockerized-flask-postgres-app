@@ -18,12 +18,12 @@ else:
 
 
 # Create a logger object
-logger = logging.getLogger('my_logger')
+logger = logging.getLogger('app_logger')
 logger.setLevel(logging.DEBUG)
 
 # Create a file handler for logging to a file (plain text)
 file_handler = logging.FileHandler(log_filename)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
 # Define a formatter for the file (plain text, no colors)
 file_formatter = logging.Formatter(

@@ -1,10 +1,13 @@
 import subprocess
 import threading
-import logging
+
 import sys
 import time
 import uuid
 import yaml
+
+import logging
+logger = logging.getLogger('app_logger')
 
 # Define constants for task status
 class TaskStatus:
@@ -29,26 +32,29 @@ class StoppableThread(threading.Thread):
 
     def stopped(self):
         return self._stop_event.is_set()
-
+    
+    
     def run(self):
         try:
-            if not self.stopped():
+            while not self.stopped():
                 self._target()
+                break  # Run the target function once and then break the loop
         except Exception as e:
-            logging.error(f"Thread encountered an error for task {self.task_id}: {e}")
+            logger.error(f"Thread encountered an error for task {self.task_id}: {e}")
             self._callback(TaskStatus.ERROR, str(e))
         finally:
             # Call the callback based on whether the task was stopped or completed
-            if not self.stopped():
-                self._callback(TaskStatus.COMPLETE)
-            else:
+            if self.stopped():
                 self._callback(TaskStatus.CANCELED)
+            else:
+                self._callback(TaskStatus.COMPLETE)
 
 # Define the Command class
 class Command:
-    def __init__(self, conf_file, process_key, script_path):
+    def __init__(self, conf_file, id, script_path, exec='python3'):
+        self.exec = exec
         self.conf_file = conf_file
-        self.process_key = process_key
+        self.id = id
         self.script_path = script_path
         self.config = self.load_config()
 
@@ -56,11 +62,11 @@ class Command:
         """Loads YAML configuration file and extracts parameters for the command."""
         with open(self.conf_file, 'r') as file:
             config = yaml.safe_load(file)
-        return config.get(self.process_key, {})
+        return config
 
-    def build_command(self):
+    def build(self):
         """Constructs the full command by injecting parameters from the YAML file."""
-        command = [self.script_path]  # Start with the script path
+        command = [self.exec] + [self.script_path]  # Start with the script path
 
         # Iterate over configuration parameters and inject them into the command
         for key, value in self.config.items():
@@ -76,8 +82,8 @@ class Dispatcher:
 
     def run_task(self, command_obj, callback):
         """Starts a new task in a stoppable thread."""
-        task_id = str(uuid.uuid4())  # Generate a unique ID for each task
-        command = command_obj.build_command()  # Get the constructed command from the Command object
+        task_id = str(uuid.uuid4())[:8]  # Generate a unique ID for each task
+        command = command_obj.build()  # Get the constructed command from the Command object
 
         def task():
             process = subprocess.Popen(
@@ -100,12 +106,12 @@ class Dispatcher:
                     if output == "" and process.poll() is not None:
                         break
                     if output:
-                        logging.info(f"[Task {task_id}] {output.strip()}")
+                        logger.info(f"[Task {task_id}][{command_obj.id}] {output.strip()}")
                         sys.stdout.flush()
 
                     error = process.stderr.readline()
                     if error:
-                        logging.error(f"[Task {task_id}] {error.strip()}")
+                        logger.error(f"[Task {task_id}] {error.strip()}")
                         sys.stderr.flush()
 
             finally:
@@ -117,6 +123,7 @@ class Dispatcher:
                 callback(task_id, TaskStatus.COMPLETE)
             else:
                 callback(task_id, TaskStatus.ERROR, f"Exit code: {exit_code}")
+
 
         # Wrapped callback to remove task after completion
         wrapped_callback = self._on_task_end(callback, task_id)
@@ -152,15 +159,15 @@ class Dispatcher:
 # Example callback function
 def task_callback(task_id, status, message=None):
     if status == TaskStatus.COMPLETE:
-        logging.info(f"Task {task_id} completed successfully.")
+        logger.info(f"Task {task_id} completed successfully.")
     elif status == TaskStatus.CANCELED:
-        logging.info(f"Task {task_id} was canceled.")
+        logger.info(f"Task {task_id} was canceled.")
     elif status == TaskStatus.ERROR:
-        logging.error(f"Task {task_id} encountered an error: {message}")
+        logger.error(f"Task {task_id} encountered an error: {message}")
 
 # Example usage
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(message)s', stream=sys.stdout)
+    logger.basicConfig(level=logger.INFO, format='%(message)s', stream=sys.stdout)
 
     # Create dispatcher
     dispatcher = Dispatcher()
@@ -168,7 +175,7 @@ if __name__ == "__main__":
     # Create Command object
     command_a = Command(
         conf_file="conf.yaml",
-        process_key="command_a",
+        identifier="command_a",
         script_path="/path/to/process_a.py"
     )
 
@@ -176,17 +183,17 @@ if __name__ == "__main__":
     task_id = dispatcher.run_task(command_a, task_callback)
 
     # List live tasks
-    logging.info(f"Live tasks: {dispatcher.get_live_tasks()}")
+    logger.info(f"Live tasks: {dispatcher.get_live_tasks()}")
 
     # Stop the task after 3 seconds (for demonstration purposes)
     time.sleep(3)
     dispatcher.stop_task(task_id)
 
     # List live tasks after stopping task
-    logging.info(f"Live tasks after stopping task: {dispatcher.get_live_tasks()}")
+    logger.info(f"Live tasks after stopping task: {dispatcher.get_live_tasks()}")
 
     # Wait to ensure any remaining tasks complete
     time.sleep(10)
 
     # List live tasks after all tasks complete
-    logging.info(f"Live tasks after all tasks: {dispatcher.get_live_tasks()}")
+    logger.info(f"Live tasks after all tasks: {dispatcher.get_live_tasks()}")
