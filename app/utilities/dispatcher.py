@@ -37,16 +37,19 @@ class StoppableThread(threading.Thread):
     def run(self):
         try:
             while not self.stopped():
-                self._target()
+                _, command_obj = self._target()
                 break  # Run the target function once and then break the loop
         except Exception as e:
-            logger.error(f"Thread encountered an error for task {self.task_id}: {e}")
+            logger.error(f"Thread encountered an error for  \
+                [Task {self.task_id}][{command_obj.id}]: {e}")
             self._callback(TaskStatus.ERROR, str(e))
         finally:
             # Call the callback based on whether the task was stopped or completed
             if self.stopped():
+                logger.info(f"[Task {self.task_id}][{command_obj.id}] status - {TaskStatus.CANCELED}")
                 self._callback(TaskStatus.CANCELED)
             else:
+                logger.info(f"[Task {self.task_id}][{command_obj.id}] status - {TaskStatus.COMPLETE}")
                 self._callback(TaskStatus.COMPLETE)
 
 # Define the Command class
@@ -100,7 +103,7 @@ class Dispatcher:
                     if self.threads[task_id].stopped():
                         process.terminate()
                         callback(task_id, TaskStatus.CANCELED)
-                        return
+                        return task_id, command_obj
 
                     output = process.stdout.readline()
                     if output == "" and process.poll() is not None:
@@ -123,14 +126,14 @@ class Dispatcher:
                 callback(task_id, TaskStatus.COMPLETE)
             else:
                 callback(task_id, TaskStatus.ERROR, f"Exit code: {exit_code}")
-
+            return task_id, command_obj
 
         # Wrapped callback to remove task after completion
         wrapped_callback = self._on_task_end(callback, task_id)
         thread = StoppableThread(task_id=task_id, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
         thread.start()
-        return task_id
+        return task_id, command_obj
 
     def stop_task(self, task_id):
         """Stops a task based on its task ID."""

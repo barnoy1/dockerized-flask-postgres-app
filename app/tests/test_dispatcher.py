@@ -61,7 +61,7 @@ def dispatcher():
 def test_run_task(dispatcher, temp_config_file, mock_script):
     command = Command(temp_config_file, 'test_python_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
-    task_id = dispatcher.run_task(command, callback)
+    task_id, _ = dispatcher.run_task(command, callback)
 
     # Wait for the task to complete using join
     thread = dispatcher.threads[task_id]
@@ -74,7 +74,7 @@ def test_stop_task(dispatcher, temp_config_file, mock_script):
     command = Command(temp_config_file, 'test_python_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
 
-    task_id = dispatcher.run_task(command, callback)
+    task_id, _ = dispatcher.run_task(command, callback)
     time.sleep(0.2)  # Let the task run for a bit
     dispatcher.stop_task(task_id)
 
@@ -115,21 +115,22 @@ def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
     python_cmd = Command(temp_config_file, 'test_python_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
 
-    task_id_a = dispatcher.run_task(python_cmd, callback)
-    task_id_b = dispatcher.run_task(python_cmd, callback)
+    task_id_a, _ = dispatcher.run_task(python_cmd, callback)
+    task_id_b, _ = dispatcher.run_task(python_cmd, callback)
 
-    time.sleep(0.2)  # Let the tasks start
-
+    
     assert len(dispatcher.get_live_tasks()) == 2
 
-    dispatcher.stop_all_tasks()
-
     # Wait for tasks to be stopped
-    start_time = time.time()
-    while dispatcher.threads and time.time() - start_time < 5:
-        time.sleep(0.1)
+    time.sleep(0.8)
+    dispatcher.stop_task(task_id_a)
+    
+    # Wait for the task to complete using join
+    if len(dispatcher.threads) > 0:
+        thread = dispatcher.threads[task_id_b]
+        thread.join()  # Wait for the task thread to complete
 
-    assert len(dispatcher.threads) == 0
+    assert len(dispatcher.get_live_tasks()) == 0
 
 def test_stop_all_tasks(dispatcher, temp_config_file, mock_script):
     python_cmd = Command(temp_config_file, 'test_python_cmd', mock_script)
