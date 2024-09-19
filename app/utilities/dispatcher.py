@@ -7,6 +7,8 @@ import uuid
 import yaml
 
 import logging
+
+from app.utilities.decorators import Singleton
 logger = logging.getLogger('app_logger')
 
 # Define constants for task status
@@ -79,6 +81,7 @@ class Command:
         return command
 
 # Dispatcher class that handles running multiple tasks in stoppable threads
+@Singleton
 class Dispatcher:
     def __init__(self):
         self.threads = {}  # Dictionary to track live tasks

@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
 @pytest.fixture
 def dispatcher():
-    return Dispatcher()
+    return Dispatcher.instance()
 
 def test_run_task(dispatcher, temp_config_file, mock_script):
     command = Command(temp_config_file, 'test_python_cmd', mock_script)

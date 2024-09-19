@@ -22,7 +22,7 @@ assets.init_app(app)
 
 with app.app_context():
     
-    from .home import route as home_route
+    from .pages.home import route as home_route
     
     # instantiate database
     from .database.models import db, User

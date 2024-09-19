@@ -10,6 +10,13 @@ from sqlalchemy.schema import Sequence
 
 db = SQLAlchemy()
 
+class Status(object):
+    PENDING = 'pending'
+    IN_PROGRESS = 'in progress'
+    CANCELED = 'canceled'
+    FAILED = 'failed'
+    COMPLETED = 'completed'
+    
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)

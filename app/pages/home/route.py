@@ -17,7 +17,7 @@ home_bp = Blueprint(
 @home_bp.route('/js/<path:filename>')
 def custom_js(filename):
     """Serve JavaScript files from the home/templates directory."""
-    return send_from_directory('home/templates', filename)
+    return send_from_directory('pages/home/templates', filename)
 
 
 @home_bp.route("/", methods=["GET", "POST"])
