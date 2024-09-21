@@ -1,3 +1,4 @@
+import logging
 import os
 from flask import Flask, request, jsonify
 from app.database.models import db, User
@@ -19,6 +20,8 @@ CORS(app)
 
 assets = Environment()
 assets.init_app(app)
+
+logger = logging.getLogger('my_logger')
 
 with app.app_context():
     
@@ -46,7 +49,6 @@ with app.app_context():
 @app.route('/test', methods=['GET'])
 def get_result():
     import logging
-    logger = logging.getLogger('my_logger')
     logger.info("This is an info message logged to both console and file.")
     return jsonify({'result': 'ok'})
 

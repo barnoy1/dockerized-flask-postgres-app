@@ -1,3 +1,4 @@
+import logging
 import pytest
 import tempfile
 import os
@@ -58,10 +59,11 @@ if __name__ == "__main__":
 def dispatcher():
     return Dispatcher.instance()
 
+
 def test_run_task(dispatcher, temp_config_file, mock_script):
-    command = Command(temp_config_file, 'test_python_cmd', mock_script)
+    command = Command(temp_config_file, 'test_run_task_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
-    task_id, _ = dispatcher.run_task(command, callback)
+    task_id = dispatcher.run_task(command, callback)
 
     # Wait for the task to complete using join
     thread = dispatcher.threads[task_id]
@@ -71,10 +73,10 @@ def test_run_task(dispatcher, temp_config_file, mock_script):
     
 
 def test_stop_task(dispatcher, temp_config_file, mock_script):
-    command = Command(temp_config_file, 'test_python_cmd', mock_script)
+    command = Command(temp_config_file, 'test_stop_task_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
 
-    task_id, _ = dispatcher.run_task(command, callback)
+    task_id = dispatcher.run_task(command, callback)
     time.sleep(0.2)  # Let the task run for a bit
     dispatcher.stop_task(task_id)
 
@@ -91,7 +93,7 @@ def test_stoppable_thread():
 
     callback = lambda status, message=None: None
 
-    thread = StoppableThread('test_task', target, callback)
+    thread = StoppableThread('test_stoppable_thread_cmd', target, callback)
     thread.start()
     thread.join()
 
@@ -103,7 +105,7 @@ def test_stoppable_thread_stop():
 
     callback = lambda status, message=None: None
 
-    thread = StoppableThread('test_task', target, callback)
+    thread = StoppableThread('test_stoppable_thread_stop_cmd', target, callback)
     thread.start()
     time.sleep(0.1)
     thread.stop()
@@ -112,11 +114,11 @@ def test_stoppable_thread_stop():
     assert not thread.is_alive()
 
 def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
-    python_cmd = Command(temp_config_file, 'test_python_cmd', mock_script)
+    python_cmd = Command(temp_config_file, 'test_run_multiple_tasks_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
 
-    task_id_a, _ = dispatcher.run_task(python_cmd, callback)
-    task_id_b, _ = dispatcher.run_task(python_cmd, callback)
+    task_id_a = dispatcher.run_task(python_cmd, callback)
+    task_id_b = dispatcher.run_task(python_cmd, callback)
 
     
     assert len(dispatcher.get_live_tasks()) == 2
@@ -133,11 +135,12 @@ def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
     assert len(dispatcher.get_live_tasks()) == 0
 
 def test_stop_all_tasks(dispatcher, temp_config_file, mock_script):
-    python_cmd = Command(temp_config_file, 'test_python_cmd', mock_script)
+    python_cmd1 = Command(temp_config_file, 'test_stop_all_tasks_cmd1', mock_script)
+    python_cmd2 = Command(temp_config_file, 'test_stop_all_tasks_cmd2', mock_script)
     callback = lambda task_id, status, message=None: None
 
-    dispatcher.run_task(python_cmd, callback)
-    dispatcher.run_task(python_cmd, callback)
+    dispatcher.run_task(python_cmd1, callback)
+    dispatcher.run_task(python_cmd2, callback)
 
     time.sleep(0.2)  # Let the tasks start
 
