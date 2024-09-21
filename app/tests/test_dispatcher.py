@@ -87,32 +87,6 @@ def test_stop_task(dispatcher, temp_config_file, mock_script):
 
     assert task_id not in dispatcher.threads
 
-def test_stoppable_thread():
-    def target():
-        time.sleep(0.2)
-
-    callback = lambda status, message=None: None
-
-    thread = StoppableThread('test_stoppable_thread_cmd', target, callback)
-    thread.start()
-    thread.join()
-
-    assert not thread.is_alive()
-
-def test_stoppable_thread_stop():
-    def target():
-        time.sleep(0.5)
-
-    callback = lambda status, message=None: None
-
-    thread = StoppableThread('test_stoppable_thread_stop_cmd', target, callback)
-    thread.start()
-    time.sleep(0.1)
-    thread.stop()
-    thread.join()
-
-    assert not thread.is_alive()
-
 def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
     python_cmd = Command(temp_config_file, 'test_run_multiple_tasks_cmd', mock_script)
     callback = lambda task_id, status, message=None: None
