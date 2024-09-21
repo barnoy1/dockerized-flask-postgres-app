@@ -28,3 +28,21 @@ def cancel_job(task_id):
     dispatcher = Dispatcher.instance()
     dispatcher.stop_task(task_id)
     return redirect(url_for('home_bp.home'))
+
+
+@job_bp.route("/job/<int:id>/console", methods=['GET'])
+def get_log_content(id):
+    """log content."""
+    from ..api import fetch_log_content
+    file_content = fetch_log_content(id)
+    conv = Ansi2HTMLConverter(dark_bg=False, scheme="solarized", markup_lines=True)
+    headers = conv.produce_headers()
+    content = conv.convert(file_content, full=False)
+    content = '<pre class="ansi2html-content">{}</pre>'.format(content)
+    
+    # if job is not completed load page with refersh cycle
+    job = JobRequest.query.get(int(id))
+    if job.status == Status.IN_PROGRESS: 
+        content += '<script type="text/javascript"> window.setTimeout( function() { window.location.reload(); console.log("refresh"); }, 1000 * 60); </script>'
+    file_content = headers + content
+    return file_content

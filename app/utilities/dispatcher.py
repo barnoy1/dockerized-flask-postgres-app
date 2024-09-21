@@ -10,6 +10,11 @@ import os
 import signal
 import io
 
+import threading
+import os
+import signal
+import logging
+
 from app.utilities.decorators import Singleton
 logger = logging.getLogger('app_logger')
 
@@ -17,12 +22,9 @@ class TaskStatus:
     COMPLETE = "complete"
     CANCELED = "canceled"
     ERROR = "error"
-import threading
-import os
-import signal
-import logging
+    
 class StoppableThread(threading.Thread):
-    def __init__(self, task_id, target, callback, command=None, capture_std=False, *args, **kwargs):
+    def __init__(self, task_id, target, callback, command=None, *args, **kwargs):
         super(StoppableThread, self).__init__(*args, **kwargs)
         self._stop_event = threading.Event()
         self._target = target
@@ -30,7 +32,6 @@ class StoppableThread(threading.Thread):
         self.task_id = task_id
         self.command = command
         self.process = None
-        self.capture_std = capture_std
         
     def stop(self):
         self._stop_event.set()
@@ -48,41 +49,21 @@ class StoppableThread(threading.Thread):
     
     def run(self):
         try:
-            result = self._target()
-            if isinstance(result, subprocess.Popen):
-                self.process = result
+            process = self._target()
+            if isinstance(process, subprocess.Popen):
+                self.process = process
             else:
                 # If the target doesn't return a process, we'll consider it complete
                 self._callback(TaskStatus.COMPLETE)
                 return
 
-            if self.command is None:
-                self.command = Command(conf_file=None, id='', script_path='', exec='')
             
             while self.process.poll() is None:
                 if self.stopped():
                     self.stop()
                     break
                 
-                # Read output and error streams
-                if self.capture_std:
-                    output = self.process.stdout.readline()
-                    if output:
-                        logger.info(f"[Task {self.task_id}][{self.command.id}] {output.strip()}")
-                    
-                    error = self.process.stderr.readline()
-                    if error:
-                        logger.error(f"[Task {self.task_id}][{self.command.id}] {error.strip()}")
-                    
                 time.sleep(0.1)
-            
-            # Read any remaining output
-            if self.capture_std and self.process:
-                output, error = self.process.communicate()
-                if output:
-                    logger.info(f"[Task {self.task_id}][{self.command.id}] {output.strip()}")
-                if error:
-                    logger.error(f"[Task {self.task_id}][{self.command.id}] {error.strip()}")
             
             if self.process:
                 exit_code = self.process.returncode
@@ -151,7 +132,7 @@ class Dispatcher:
 
             return process
 
-        wrapped_callback = self._on_task_end(callback, task_id)
+        wrapped_callback = self._on_task_end(callback, task_id, command)
         thread = StoppableThread(task_id=task_id, command=command_obj, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
         thread.start()
@@ -168,21 +149,12 @@ class Dispatcher:
         for task_id in list(self.threads.keys()):
             self.stop_task(task_id)
 
-    def _on_task_end(self, callback, task_id):
+    def _on_task_end(self, callback, task_id, command):
         def wrapper(status, message=None):
-            callback(task_id, status, message)
+            callback(task_id, command, status, message)
             if task_id in self.threads:
                 del self.threads[task_id]
         return wrapper
 
     def get_live_tasks(self):
         return list(self.threads.keys())
-
-# Example callback function
-def task_callback(task_id, status, message=None):
-    if status == TaskStatus.COMPLETE:
-        logger.info(f"Task {task_id} completed successfully.")
-    elif status == TaskStatus.CANCELED:
-        logger.info(f"Task {task_id} was canceled.")
-    elif status == TaskStatus.ERROR:
-        logger.error(f"Task {task_id} encountered an error: {message}")

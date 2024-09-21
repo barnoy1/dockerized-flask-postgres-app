@@ -60,9 +60,21 @@ def dispatcher():
     return Dispatcher.instance()
 
 
+
+# Example callback function
+def task_test_callback(task_id, command, status, message=None):
+    import logging
+    logger = logging.getLogger('app_logger')
+    if status == TaskStatus.COMPLETE:
+        logger.info(f"Task {task_id} completed custom mock postprocessing callback.")
+    elif status == TaskStatus.CANCELED:
+        logger.info(f"Task {task_id} canceled custom mock postprocessing callback")
+    elif status == TaskStatus.ERROR:
+        logger.error(f"Task {task_id} error custom mock postprocessing callback.\ninput error message: {message}")
+        
 def test_run_task(dispatcher, temp_config_file, mock_script):
     command = Command(temp_config_file, 'test_run_task_cmd', mock_script)
-    callback = lambda task_id, status, message=None: None
+    callback = task_test_callback
     task_id = dispatcher.run_task(command, callback)
 
     # Wait for the task to complete using join
@@ -74,7 +86,7 @@ def test_run_task(dispatcher, temp_config_file, mock_script):
 
 def test_stop_task(dispatcher, temp_config_file, mock_script):
     command = Command(temp_config_file, 'test_stop_task_cmd', mock_script)
-    callback = lambda task_id, status, message=None: None
+    callback = task_test_callback
 
     task_id = dispatcher.run_task(command, callback)
     time.sleep(0.2)  # Let the task run for a bit
@@ -89,7 +101,7 @@ def test_stop_task(dispatcher, temp_config_file, mock_script):
 
 def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
     python_cmd = Command(temp_config_file, 'test_run_multiple_tasks_cmd', mock_script)
-    callback = lambda task_id, status, message=None: None
+    callback = task_test_callback
 
     task_id_a = dispatcher.run_task(python_cmd, callback)
     task_id_b = dispatcher.run_task(python_cmd, callback)
@@ -111,7 +123,7 @@ def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
 def test_stop_all_tasks(dispatcher, temp_config_file, mock_script):
     python_cmd1 = Command(temp_config_file, 'test_stop_all_tasks_cmd1', mock_script)
     python_cmd2 = Command(temp_config_file, 'test_stop_all_tasks_cmd2', mock_script)
-    callback = lambda task_id, status, message=None: None
+    callback = task_test_callback
 
     dispatcher.run_task(python_cmd1, callback)
     dispatcher.run_task(python_cmd2, callback)
