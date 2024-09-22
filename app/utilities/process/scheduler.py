@@ -30,12 +30,12 @@ class Scheduler(Dispatcher):
     def run_task(self, command_obj, callback):
         
         # wrap input callback with db operations
-        wrapped_callback = self._on_task_end(callback, task_id, command_obj)
+        wrapped_callback = self._on_task_end_db(callback, task_id, command_obj)
         task_id = super().run_task(command_obj, wrapped_callback)
         
         # Insert new TaskRequest record in the database using the new task_id
         from app.database.models import db, TaskRequest
-        new_task_request = TaskRequest(task_id=task_id, command_obj=command_obj)
+        new_task_request = TaskRequest(task_id=task_id, command=command_obj)
 
         try:
             db.session.add(new_task_request)
@@ -55,7 +55,7 @@ class Scheduler(Dispatcher):
         if task_request:
                 self._update_task_request_status(task_request, TaskStatus.CANCELED) 
 
-    def _on_task_end(self, callback, task_id, command, task_request):
+    def _on_task_end_db(self, callback, task_id, command, task_request):
         def wrapper(status, message=None):
             # Call the callback provided
             callback(task_id, command, status, message)

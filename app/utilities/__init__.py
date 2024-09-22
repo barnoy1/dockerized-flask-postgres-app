@@ -7,7 +7,7 @@ from datetime import datetime
 def is_running_in_pytest():
     """Detect if the code is running under pytest."""
     return "pytest" in sys.modules
-
+    
 # Generate the filename with current date and time
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 if not is_running_in_pytest():

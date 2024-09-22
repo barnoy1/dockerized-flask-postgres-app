@@ -8,18 +8,22 @@ def is_running_in_pytest():
     """Detect if the code is running under pytest."""
     return "pytest" in sys.modules
 
+# Create a logger object
+logger = logging.getLogger('app_logger')
+
+
 # Generate the filename with current date and time
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 if not is_running_in_pytest():
     log_filename = f'/app/out/logs/app_{current_time}.log'
+    logger.setLevel(logging.DEBUG)
 else:
     os.makedirs('out/logs', exist_ok=True)
     log_filename = f'out/logs/app_{current_time}.log'
+    logger.setLevel(logging.INFO)
 
 
-# Create a logger object
-logger = logging.getLogger('app_logger')
-logger.setLevel(logging.DEBUG)
+
 
 # Create a file handler for logging to a file (plain text)
 file_handler = logging.FileHandler(log_filename)
@@ -57,23 +61,6 @@ console_handler.setFormatter(color_formatter)
 
 # Add the console handler to the logger
 logger.addHandler(console_handler)
-
-# Custom class to redirect stdout to the logger (only for file handler)
-class StdOutToLogger:
-    def __init__(self, logger, level=logging.INFO):
-        self.logger = logger
-        self.level = level
-        self._stdout = sys.stdout  # Save the original stdout
-    
-    def write(self, message):
-        if message.strip():  # Only log non-empty messages
-            self.logger.log(self.level, message.strip())
-
-    def flush(self):
-        pass  # Empty, because we log immediately
-
-# Redirect stdout to file logger (but not console logger)
-sys.stdout = StdOutToLogger(logger, logging.INFO)
 
 # Log an example message
 logger.info(f"logger created in current working directory: {os.getcwd()}")

@@ -21,10 +21,10 @@ logger = logging.getLogger('app_logger')
 
 
 class Command:
-    def __init__(self, conf_file, id, script_path, exec='python3'):
+    def __init__(self, conf_file, name, script_path, exec='python3'):
         self.exec = exec
         self.conf_file = conf_file
-        self.id = id
+        self.name = name
         self.script_path = script_path
         if conf_file:
             self.config = self.load_config()

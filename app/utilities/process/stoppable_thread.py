@@ -67,13 +67,13 @@ class StoppableThread(threading.Thread):
                 exit_code = self.process.returncode
                 
                 if self.stopped():
-                    logger.info(f"[Task {self.task_id}][{self.command.id}] status - {TaskStatus.CANCELED}")
+                    logger.info(f"[Task {self.task_id}][{self.command.name}] status - {TaskStatus.CANCELED}")
                     self._callback(TaskStatus.CANCELED)
                 elif exit_code == 0:
-                    logger.info(f"[Task {self.task_id}][{self.command.id}] status - {TaskStatus.COMPLETED}")
+                    logger.info(f"[Task {self.task_id}][{self.command.name}] status - {TaskStatus.COMPLETED}")
                     self._callback(TaskStatus.COMPLETED)
                 else:
-                    logger.error(f"[Task {self.task_id}][{self.command.id}] status - {TaskStatus.ERROR}")
+                    logger.error(f"[Task {self.task_id}][{self.command.name}] status - {TaskStatus.ERROR}")
                     self._callback(TaskStatus.ERROR, f"Exit code: {exit_code}")
             else:
                 # If there's no process, consider it complete

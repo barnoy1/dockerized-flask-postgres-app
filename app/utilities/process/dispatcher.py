@@ -41,7 +41,7 @@ class Dispatcher:
 
             return process
 
-        wrapped_callback = self._on_task_end(callback, task_id, command)
+        wrapped_callback = self._on_task_end_internal(callback, task_id, command)
         thread = StoppableThread(task_id=task_id, command=command_obj, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
         thread.start()
@@ -58,7 +58,7 @@ class Dispatcher:
         for task_id in list(self.threads.keys()):
             self.stop_task(task_id)
 
-    def _on_task_end(self, callback, task_id, command):
+    def _on_task_end_internal(self, callback, task_id, command):
         def wrapper(status, message=None):
             callback(task_id, command, status, message)
             if task_id in self.threads:
