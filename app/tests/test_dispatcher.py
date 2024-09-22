@@ -4,7 +4,12 @@ import tempfile
 import os
 import time
 import yaml
-from app.utilities.dispatcher import Command, Dispatcher, TaskStatus, StoppableThread
+from app.consts import TaskStatus
+from app.utilities.process.command import Command 
+from app.utilities.process.dispatcher import Dispatcher
+from app.utilities.process.stoppable_thread import StoppableThread
+import logging
+logger = logging.getLogger('app_logger')
 
 @pytest.fixture
 def temp_config_file():
@@ -63,9 +68,7 @@ def dispatcher():
 
 # Example callback function
 def task_test_callback(task_id, command, status, message=None):
-    import logging
-    logger = logging.getLogger('app_logger')
-    if status == TaskStatus.COMPLETE:
+    if status == TaskStatus.COMPLETED:
         logger.info(f"Task {task_id} completed custom mock postprocessing callback.")
     elif status == TaskStatus.CANCELED:
         logger.info(f"Task {task_id} canceled custom mock postprocessing callback")

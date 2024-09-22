@@ -2,7 +2,7 @@
 
 import datetime
 from venv import logger
-from app.consts import Status, ProcessName
+from app.consts import TaskStatus
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, Time
 from flask_login import UserMixin
