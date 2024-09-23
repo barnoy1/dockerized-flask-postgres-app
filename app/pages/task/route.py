@@ -1,6 +1,7 @@
 
 """General page routes."""
 from app.database.models import TaskRequest
+
 from flask import Blueprint, redirect, url_for, send_from_directory
 from flask import current_app as app
 from flask import render_template
@@ -12,24 +13,42 @@ from app.consts import TaskStatus
 task_bp = Blueprint(
     "task_bp",
     __name__,
-    template_folder="templates",  # Points to "home/templates"
+    template_folder="templates",  # Points to "task/templates"
     static_folder="../static"     # Points to the root-level "static" folder
 )
 
 
-@task_bp.route("/task/invoke/<string:task_path>",  methods=['POST'])
-def invoke_task(task_id):
-    """set to extenral folder."""
-    from ...utilities.dispatcher import Dispatcher
-    dispatcher = Dispatcher.instance()
-    dispatcher.stop_task(task_id)
+@task_bp.route('/js/<path:filename>')
+def custom_js(filename):
+    """Serve JavaScript files from the task/templates directory."""
+    return send_from_directory('pages/task/templates', filename)
+
+
+
+@task_bp.route("/task/invoke/<string:process>", methods=['GET', 'POST'])
+def invoke_task(process):
+    from app.config import Config
+    proc_data = [proc_data for proc_data in Config.PROCESS_MAPPING 
+                         if proc_data.name == process]
+    # do nothing
+    if len(proc_data) == 0: return redirect(url_for('home_bp.home'))
+    proc_data = proc_data[0]
+    
+    from utilities.process.command import Command
+    command = Command(conf_file=proc_data.config_file,
+                      entry_point=proc_data.entry_point,
+                      name=proc_data.name)
+    
+    from app.utilities.process.scheduler import Scheduler
+    scheduler = Scheduler.instance()
+    scheduler.invoke_process_task(command)
     return redirect(url_for('home_bp.home'))
 
 @task_bp.route("/task/cancel/<string:id>",  methods=['GET', 'POST'])
 def cancel_job(task_id):
     """cancel job."""
-    from ...utilities.dispatcher import Dispatcher
-    dispatcher = Dispatcher.instance()
+    from app.utilities.process.scheduler import Scheduler
+    dispatcher = Scheduler.instance()
     dispatcher.stop_task(task_id)
     return redirect(url_for('home_bp.home'))
 

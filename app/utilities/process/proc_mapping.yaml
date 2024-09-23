@@ -1,0 +1,9 @@
+processes:
+  - proc:
+      name: 'process_a'
+      entry_point: '/path/to/entrypoint/proc_a_console.py'
+      config_file: '/path/to/proc_a.yaml'
+  - proc:
+      name: 'process_b'
+      entry_point: '/path/to/entrypoint/proc_b_console.py'
+      config_file: '/path/to/proc_b.yaml'

@@ -49,15 +49,15 @@ if __name__ == "__main__":
     # Create the temporary script file
     with tempfile.NamedTemporaryFile(mode='w+', suffix='.py', delete=False) as temp_file:
         temp_file.write(script_content)
-        script_path = temp_file.name
+        entry_point = temp_file.name
 
     # Set executable permissions on the mock script
-    os.chmod(script_path, 0o777)  # Add execute permissions
+    os.chmod(entry_point, 0o777)  # Add execute permissions
 
-    yield script_path
+    yield entry_point
 
     # Clean up the temporary file after the test
-    os.unlink(script_path)
+    os.unlink(entry_point)
 
 
 @pytest.fixture

@@ -25,17 +25,17 @@ from app.database.models import db, TaskRequest
 @Singleton
 class Scheduler(Dispatcher):
     def __init__(self):
-        self.threads = {}
-
-    def run_task(self, command_obj, callback):
+        pass
+    
+    def invoke_process_task(self, command, callback):
         
         # wrap input callback with db operations
-        wrapped_callback = self._on_task_end_db(callback, task_id, command_obj)
-        task_id = super().run_task(command_obj, wrapped_callback)
+        wrapped_callback = self._on_task_end_db(callback, task_id, command)
+        task_id = super().run_task(command, wrapped_callback)
         
         # Insert new TaskRequest record in the database using the new task_id
         from app.database.models import db, TaskRequest
-        new_task_request = TaskRequest(task_id=task_id, command=command_obj)
+        new_task_request = TaskRequest(task_id=task_id, command=command)
 
         try:
             db.session.add(new_task_request)
@@ -44,9 +44,7 @@ class Scheduler(Dispatcher):
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error inserting new task_request into database: {e}")
-            return None
-        return task_id
-    
+           
 
     def stop_task(self, task_id):
         super().stop_task(task_id)

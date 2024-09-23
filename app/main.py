@@ -21,11 +21,12 @@ CORS(app)
 assets = Environment()
 assets.init_app(app)
 
-logger = logging.getLogger('my_logger')
+logger = logging.getLogger('app_logger')
 
 with app.app_context():
     
     from .pages.home import route as home_route
+    from .pages.task import route as task_route
     
     # instantiate database
     from .database.models import db, User
@@ -34,7 +35,7 @@ with app.app_context():
 
     # Register Blueprints
     app.register_blueprint(home_route.home_bp)
-    
+    app.register_blueprint(task_route.task_bp)
     
     login_manager = LoginManager()
     login_manager.login_view = 'auth_bp.login'

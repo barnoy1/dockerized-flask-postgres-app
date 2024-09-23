@@ -21,11 +21,11 @@ logger = logging.getLogger('app_logger')
 
 
 class Command:
-    def __init__(self, conf_file, name, script_path, exec='python3'):
+    def __init__(self, conf_file, name, entry_point, exec='python3'):
         self.exec = exec
         self.conf_file = conf_file
         self.name = name
-        self.script_path = script_path
+        self.entry_point = entry_point
         if conf_file:
             self.config = self.load_config()
 
@@ -37,7 +37,7 @@ class Command:
 
     def build(self):
         """Constructs the full command by injecting parameters from the YAML file."""
-        command = [self.exec] + [self.script_path]  # Start with the script path
+        command = [self.exec] + [self.entry_point]  # Start with the script path
 
         # Iterate over configuration parameters and inject them into the command
         for key, value in self.config.items():

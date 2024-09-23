@@ -8,3 +8,4 @@ flask-login
 flask-assets
 flask-cors
 flask_login
+pyyaml

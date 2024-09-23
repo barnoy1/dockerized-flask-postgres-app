@@ -24,13 +24,13 @@ class Dispatcher:
     def __init__(self):
         self.threads = {}
 
-    def run_task(self, command_obj, callback):
+    def run_task(self, command, callback):
         task_id = str(uuid.uuid4())[:8]
-        command = command_obj.build()
+        command_str = command.build()
 
         def task():
             process = subprocess.Popen(
-                command,
+                command_str,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -42,7 +42,7 @@ class Dispatcher:
             return process
 
         wrapped_callback = self._on_task_end_internal(callback, task_id, command)
-        thread = StoppableThread(task_id=task_id, command=command_obj, target=task, callback=wrapped_callback)
+        thread = StoppableThread(task_id=task_id, command=command, target=task, callback=wrapped_callback)
         self.threads[task_id] = thread
         thread.start()
         return task_id
