@@ -1,0 +1,39 @@
+# global configurations
+globals:
+  # path to external resources
+  paths:
+    path1: 'path/to/dir1'
+    path2: 'path/to/dir2'
+  # subcommands: each entry points may have subparser
+  sub_commands:
+    # specific subcommand which associated with target subparser
+    command_a:
+        # specific command configurations
+        configurations:
+          cmd_resouce_path: /path/to/cmd_a/resource
+        # list of parameters of this specific command (switches, pods)
+        parameters:
+          save_images: True
+          num_of_threads: 3
+          transparency: 0.4
+
+
+
+globals:
+  paths:
+    path1: 'path/to/dir1'
+    path2: 
+      - 'path/to/dir2' 
+      - 'path/to/dir3'
+  sub_commands:
+    command_a:
+      configurations: 
+        cmd_resouce_path: '/path/to/cmd_a/resource'
+      parameters:
+        save_images: True
+        num_of_threads: 3
+        transparency: 0.4
+        options:
+          - a
+          - b
+          

@@ -1,0 +1,8 @@
+globals:
+    paths:
+        path1: '/path/to/dir1'
+        path2: '/path/to/dir2'
+
+configurations:
+    process_a: '/path/to/process_a.conf.yaml'
+    process_b: '/path/to/process_b.conf.yaml'   

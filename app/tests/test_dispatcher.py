@@ -1,4 +1,3 @@
-import logging
 import pytest
 import tempfile
 import os
@@ -7,22 +6,44 @@ import yaml
 from app.consts import TaskStatus
 from app.utilities.process.command import Command 
 from app.utilities.process.dispatcher import Dispatcher
-from app.utilities.process.stoppable_thread import StoppableThread
 import logging
+
 logger = logging.getLogger('app_logger')
 
-@pytest.fixture
+# Mock YAML config based on your provided structure
+@pytest.fixture(scope='module')
 def temp_config_file():
-    with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp_file:
-        config = {
-            'arg1': 'value1',
-            'arg2': 'value2'
+    config = {
+        'globals': {
+            'paths': {
+                'path1': 'path/to/dir1',
+                'path2': ['path/to/dir2', 'path/to/dir3']
+            },
+            'sub_commands': {
+                'command_a': {
+                    'configurations': {
+                        'cmd_resouce_path': '/path/to/cmd_a/resource'
+                    },
+                    'parameters': {
+                        'num_of_threads': 3,
+                        'transparency': 0.4,
+                        'options': ['a', 'b']
+                    },
+                    'flags': ['save_images', 'use_aug']
+                }
+            }
         }
+    }
+    
+    with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp_file:
         yaml.dump(config, temp_file)
-    yield temp_file.name
-    os.unlink(temp_file.name)
+        config_file_path = temp_file.name
+    
+    yield config_file_path
+    os.unlink(config_file_path)
 
 
+# Mock Python script that uses arguments from the configuration file
 @pytest.fixture
 def mock_script():
     script_content = """
@@ -64,8 +85,6 @@ if __name__ == "__main__":
 def dispatcher():
     return Dispatcher.instance()
 
-
-
 # Example callback function
 def task_test_callback(task_id, command, status, message=None):
     if status == TaskStatus.COMPLETED:
@@ -74,9 +93,16 @@ def task_test_callback(task_id, command, status, message=None):
         logger.info(f"Task {task_id} canceled custom mock postprocessing callback")
     elif status == TaskStatus.ERROR:
         logger.error(f"Task {task_id} error custom mock postprocessing callback.\ninput error message: {message}")
-        
+
+
+# Tests
 def test_run_task(dispatcher, temp_config_file, mock_script):
-    command = Command(temp_config_file, 'test_run_task_cmd', mock_script)
+    
+    command = Command(conf_file=temp_config_file, 
+                      command_name='command_a', 
+                      entry_point=mock_script, 
+                      exec='python3')
+    
     callback = task_test_callback
     task_id = dispatcher.run_task(command, callback)
 
@@ -88,7 +114,7 @@ def test_run_task(dispatcher, temp_config_file, mock_script):
     
 
 def test_stop_task(dispatcher, temp_config_file, mock_script):
-    command = Command(temp_config_file, 'test_stop_task_cmd', mock_script)
+    command = Command(temp_config_file, 'command_a', mock_script)
     callback = task_test_callback
 
     task_id = dispatcher.run_task(command, callback)
@@ -102,14 +128,14 @@ def test_stop_task(dispatcher, temp_config_file, mock_script):
 
     assert task_id not in dispatcher.threads
 
+
 def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
-    python_cmd = Command(temp_config_file, 'test_run_multiple_tasks_cmd', mock_script)
+    python_cmd = Command(temp_config_file, 'command_a', mock_script)
     callback = task_test_callback
 
     task_id_a = dispatcher.run_task(python_cmd, callback)
     task_id_b = dispatcher.run_task(python_cmd, callback)
 
-    
     assert len(dispatcher.get_live_tasks()) == 2
 
     # Wait for tasks to be stopped
@@ -123,9 +149,10 @@ def test_run_multiple_tasks(dispatcher, temp_config_file, mock_script):
 
     assert len(dispatcher.get_live_tasks()) == 0
 
+
 def test_stop_all_tasks(dispatcher, temp_config_file, mock_script):
-    python_cmd1 = Command(temp_config_file, 'test_stop_all_tasks_cmd1', mock_script)
-    python_cmd2 = Command(temp_config_file, 'test_stop_all_tasks_cmd2', mock_script)
+    python_cmd1 = Command(temp_config_file, 'command_a', mock_script)
+    python_cmd2 = Command(temp_config_file, 'command_a', mock_script)
     callback = task_test_callback
 
     dispatcher.run_task(python_cmd1, callback)

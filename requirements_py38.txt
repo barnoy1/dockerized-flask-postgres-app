@@ -9,3 +9,6 @@ flask-assets
 flask-cors
 flask_login
 pyyaml
+addict
+yalp
+pytest

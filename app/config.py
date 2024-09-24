@@ -31,7 +31,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Load the process mapping into the class variable
-    PROCESS_MAPPING = load_process_config('app/utilities/process/proc_mapping.yaml')
+    PROCESS_MAPPING = load_process_config('app/data/proc_mapping.yaml')
 
     logger.info(pprint.pformat([
         {
