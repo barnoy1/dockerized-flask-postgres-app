@@ -18,7 +18,7 @@ import logging
 
 from app.consts import TaskStatus
 from app.utilities.decorators import Singleton
-logger = logging.getLogger('app_logger')
+from app import logger
 from app.utilities.process.dispatcher import Dispatcher
 from app.database.models import db, TaskRequest
         

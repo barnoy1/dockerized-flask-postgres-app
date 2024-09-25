@@ -1,0 +1,12 @@
+
+processes:
+    process_a:
+        sub_commands:
+            command_a:
+                configurations:
+                    key: 'value'
+                    image_size:
+                        - 1024
+                        - 1024
+                parameters:
+                    save_image: True

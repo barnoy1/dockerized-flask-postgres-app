@@ -21,7 +21,7 @@ CORS(app)
 assets = Environment()
 assets.init_app(app)
 
-logger = logging.getLogger('app_logger')
+from app import logger
 
 with app.app_context():
     

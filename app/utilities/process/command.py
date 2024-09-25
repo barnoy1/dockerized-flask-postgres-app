@@ -18,7 +18,7 @@ import logging
 
 from app.utilities.conf.slconfig import SLConfig
 from app.utilities.decorators import Singleton
-logger = logging.getLogger('app_logger')
+from app import logger
 
 class Command:
     def __init__(self, conf_file, entry_point, command_name=None, exec='python3'):

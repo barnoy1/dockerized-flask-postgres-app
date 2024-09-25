@@ -19,7 +19,7 @@ from app.consts import TaskStatus
 from app.utilities.process.command import Command
 
 from app.utilities.decorators import Singleton
-logger = logging.getLogger('app_logger')
+from app import logger
 
 class StoppableThread(threading.Thread):
     def __init__(self, task_id, target, callback, command=None, *args, **kwargs):
@@ -61,6 +61,17 @@ class StoppableThread(threading.Thread):
                     self.stop()
                     break
                 
+                # Read stdout 
+                stdout_output = self.process.stdout.readline()
+                if stdout_output:
+                    logger.debug(f"[Task {self.task_id}][{self.command.name}]: {error_output.decode().strip()}")
+
+                # Read stderr
+                error_output = self.process.stderr.readline()
+                if error_output:
+                    logger.debug(f"[Task {self.task_id}][{self.command.name}]: {error_output.decode().strip()}")
+
+
                 time.sleep(0.1)
             
             if self.process:

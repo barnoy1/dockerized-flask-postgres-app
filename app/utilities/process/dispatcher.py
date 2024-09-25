@@ -16,7 +16,7 @@ import signal
 import logging
 
 from app.utilities.decorators import Singleton
-logger = logging.getLogger('app_logger')
+from app import logger
 from app.utilities.process.stoppable_thread import StoppableThread
 
 @Singleton
